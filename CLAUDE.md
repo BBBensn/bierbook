@@ -13,7 +13,7 @@ Projekt-spezifischer Kontext. Ergänzt `~/.claude/CLAUDE.md`. Ablageort: `~/Docu
 
 - **Name:** BierBook
 - **Domain:** bierbook.bensn.at
-- **Version:** v1.1.0 ✅ deployed 2026-06-21
+- **Version:** v2.0.0 ✅ deployed 2026-06-21
 - **Status:** active
 - **Stack:** Vanilla JS + Flask + SQLite
 
@@ -27,17 +27,18 @@ Katalogisierungs-App für die Bierflaschensammlung meines Vaters (möglichst obs
 
 ## Datenmodell
 
-**brands** (Marke/Brauerei)
+**breweries** (Brauerei — oberste Entität)
 
 - `id`
 - `name` (unique)
-- `country` (optional — Land/Region ist Eigenschaft der Marke, nicht der einzelnen Flasche)
+- `country` (optional — Land/Region ist Eigenschaft der Brauerei)
 - `created_at`
 
-**bottles** (Flasche)
+**bottles** (Flasche/Produkt)
 
 - `id`
-- `brand_id` (FK → brands)
+- `brewery_id` (FK → breweries)
+- `bezeichnung` (Pflicht — Produktname/Markenname auf dem Etikett, z.B. "Obertrumer Original")
 - `style` (optional, z.B. "Pils", "IPA")
 - `notes` (Notizen/Bewertung, freitext)
 - `created_at`
@@ -50,7 +51,7 @@ Katalogisierungs-App für die Bierflaschensammlung meines Vaters (möglichst obs
 - `created_at`
 - Beziehung 1:n — mehrere Fotos pro Flasche möglich, kein Pflichtfoto (Platzhalterbild im Frontend, wenn keine Fotos vorhanden)
 
-**Marken-Handling:** Keine separate Verwaltungsoberfläche für Marken. Beim Anlegen einer Flasche wird der Markenname per Autocomplete vorgeschlagen (bestehende Marken); existiert die Marke noch nicht, wird sie automatisch beim Speichern angelegt.
+**Brauerei-Handling:** Keine separate Verwaltungsoberfläche für Brauereien (außer Bearbeiten/Löschen in der Detailansicht). Beim Anlegen einer Flasche wird der Brauerei-Name per Autocomplete vorgeschlagen; existiert die Brauerei noch nicht, wird sie automatisch angelegt. `bezeichnung` ist der Produktname, den der Nutzer auf dem Etikett sieht — getrennt von der Brauerei.
 
 ---
 
@@ -145,7 +146,7 @@ Begründung: Einziger Nutzer (Vater), keine sensiblen Daten (Bierfotos/Notizen),
 - API-Responses: `{success, data, error}`
 - DB-Zugriffe nur über `db.py`
 - Bilder serverseitig mit Thumbnail-Generierung speichern (schnelles Grid-Laden auf dem Handy)
-- Land/Region hängt an `brands`, nicht an `bottles`
+- Land/Region hängt an `breweries`, nicht an `bottles`
 
 ---
 
@@ -155,7 +156,8 @@ Begründung: Einziger Nutzer (Vater), keine sensiblen Daten (Bierfotos/Notizen),
 |---|---|---|
 |v1.0.0|MVP: Flaschen anlegen/anzeigen, Marken-Autocomplete, Fotos, Suche/Filter, Markenansicht|✅ done|
 |v1.1.0|PWA-Fix (Safe Area), Marke bearbeiten, App-Icon, Button-Konsistenz|✅ done|
-|v1.2.0|Offline-Fähigkeit (Service Worker, lokale Queue)|geplant|
+|v2.0.0|Breaking Refactor: Brauerei als oberste Entität, Bezeichnung als Pflichtfeld auf Flaschen|✅ done|
+|v2.1.0|Offline-Fähigkeit (Service Worker, lokale Queue)|geplant|
 
 ---
 

@@ -50,9 +50,9 @@ def attach_photos(bottle_id):
             db.add_photo(bottle_id, save_photo(f))
 
 
-@app.route('/api/brands/autocomplete')
-def brands_autocomplete():
-    return ok(db.brand_autocomplete(request.args.get('q', '')))
+@app.route('/api/breweries/autocomplete')
+def breweries_autocomplete():
+    return ok(db.brewery_autocomplete(request.args.get('q', '')))
 
 
 @app.route('/api/styles/autocomplete')
@@ -64,7 +64,7 @@ def styles_autocomplete():
 def bottles_list():
     return ok(db.list_bottles(
         search=request.args.get('search'),
-        brand=request.args.get('brand'),
+        brewery=request.args.get('brewery'),
         style=request.args.get('style'),
         country=request.args.get('country'),
     ))
@@ -72,12 +72,16 @@ def bottles_list():
 
 @app.route('/api/bottles', methods=['POST'])
 def bottles_create():
-    brand_name = request.form.get('brand_name', '').strip()
-    if not brand_name:
-        return err('Markenname erforderlich')
+    brewery_name = request.form.get('brewery_name', '').strip()
+    if not brewery_name:
+        return err('Brauerei erforderlich')
+    bezeichnung = request.form.get('bezeichnung', '').strip()
+    if not bezeichnung:
+        return err('Bezeichnung erforderlich')
     bottle_id = db.create_bottle(
-        brand_name,
-        request.form.get('brand_country', '').strip(),
+        brewery_name,
+        request.form.get('brewery_country', '').strip(),
+        bezeichnung,
         request.form.get('style', '').strip(),
         request.form.get('notes', '').strip(),
     )
@@ -93,13 +97,17 @@ def bottle_detail(bottle_id):
 
 @app.route('/api/bottles/<int:bottle_id>', methods=['PUT'])
 def bottle_update(bottle_id):
-    brand_name = request.form.get('brand_name', '').strip()
-    if not brand_name:
-        return err('Markenname erforderlich')
+    brewery_name = request.form.get('brewery_name', '').strip()
+    if not brewery_name:
+        return err('Brauerei erforderlich')
+    bezeichnung = request.form.get('bezeichnung', '').strip()
+    if not bezeichnung:
+        return err('Bezeichnung erforderlich')
     db.update_bottle(
         bottle_id,
-        brand_name,
-        request.form.get('brand_country', '').strip(),
+        brewery_name,
+        request.form.get('brewery_country', '').strip(),
+        bezeichnung,
         request.form.get('style', '').strip(),
         request.form.get('notes', '').strip(),
     )
@@ -124,32 +132,32 @@ def photo_delete(photo_id):
     return ok(None)
 
 
-@app.route('/api/brands', methods=['GET'])
-def brands_list():
-    return ok(db.list_brands())
+@app.route('/api/breweries', methods=['GET'])
+def breweries_list():
+    return ok(db.list_breweries())
 
 
-@app.route('/api/brands/<int:brand_id>', methods=['PUT'])
-def brand_update(brand_id):
+@app.route('/api/breweries/<int:brewery_id>', methods=['PUT'])
+def brewery_update(brewery_id):
     name = request.form.get('name', '').strip()
     if not name:
-        return err('Markenname erforderlich')
-    success, error = db.update_brand(brand_id, name, request.form.get('country', '').strip())
-    return ok({'id': brand_id}) if success else err(error)
+        return err('Brauerei-Name erforderlich')
+    success, error = db.update_brewery(brewery_id, name, request.form.get('country', '').strip())
+    return ok({'id': brewery_id}) if success else err(error)
 
 
-@app.route('/api/brands/<int:brand_id>', methods=['DELETE'])
-def brand_delete(brand_id):
-    success, error = db.delete_brand(brand_id)
+@app.route('/api/breweries/<int:brewery_id>', methods=['DELETE'])
+def brewery_delete(brewery_id):
+    success, error = db.delete_brewery(brewery_id)
     return ok(None) if success else err(error)
 
 
-@app.route('/api/brands/<int:brand_id>/bottles', methods=['GET'])
-def brand_bottles(brand_id):
-    brand, bottles = db.get_brand_with_bottles(brand_id)
-    if brand is None:
+@app.route('/api/breweries/<int:brewery_id>/bottles', methods=['GET'])
+def brewery_bottles(brewery_id):
+    brewery, bottles = db.get_brewery_with_bottles(brewery_id)
+    if brewery is None:
         return err('Nicht gefunden', 404)
-    return ok({'brand': brand, 'bottles': bottles})
+    return ok({'brewery': brewery, 'bottles': bottles})
 
 
 if __name__ == '__main__':

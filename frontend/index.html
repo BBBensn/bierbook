@@ -249,12 +249,12 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
       <span class="nav-label">Sammlung</span>
     </button>
     <button class="nav-add" onclick="App.go('add')" title="Flasche hinzufügen">＋</button>
-    <button class="nav-btn" id="navBrands" onclick="App.go('brands')">
+    <button class="nav-btn" id="navBreweries" onclick="App.go('breweries')">
       <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
         <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="3" stroke-linecap="round"/>
       </svg>
-      <span class="nav-label">Marken</span>
+      <span class="nav-label">Brauereien</span>
     </button>
   </nav>
 </div>
@@ -334,9 +334,7 @@ function showToast(msg) {
 
 function makeAutocomplete(input, fetchFn, onSelect) {
   let drop = null, focIdx = -1;
-
   function close() { drop?.remove(); drop = null; focIdx = -1; }
-
   function open(items) {
     close();
     if (!items.length) return;
@@ -351,13 +349,11 @@ function makeAutocomplete(input, fetchFn, onSelect) {
     });
     input.parentNode.appendChild(drop);
   }
-
   input.addEventListener('input', async () => {
     const q = input.value.trim();
     if (!q) { close(); return; }
     try { open(await fetchFn(q)); } catch(_) {}
   });
-
   input.addEventListener('keydown', e => {
     if (!drop) return;
     const rows = drop.querySelectorAll('.ac-item');
@@ -367,7 +363,6 @@ function makeAutocomplete(input, fetchFn, onSelect) {
     else if (e.key === 'Escape') { close(); }
     rows.forEach((r,i) => r.classList.toggle('focused', i === focIdx));
   });
-
   input.addEventListener('blur', () => setTimeout(close, 150));
 }
 
@@ -417,7 +412,7 @@ const App = {
 
   _setNav(view) {
     document.getElementById('navGrid').classList.toggle('active', view === 'grid');
-    document.getElementById('navBrands').classList.toggle('active', view === 'brands');
+    document.getElementById('navBreweries').classList.toggle('active', view === 'breweries');
   },
 
   _setTop(back, title, showSearch) {
@@ -433,28 +428,27 @@ const App = {
     this._setNav(view);
     const main = document.getElementById('main');
     main.innerHTML = '<div class="loading">Lade …</div>';
-
     if (view === 'grid') {
       this._setTop(false, '', true);
       this._renderGrid();
-    } else if (view === 'brands') {
+    } else if (view === 'breweries') {
       this._setTop(false, '', false);
-      this._renderBrands();
+      this._renderBreweries();
     } else if (view === 'bottle') {
       this._setTop(true, '', false);
       this._renderBottle(id);
-    } else if (view === 'brand') {
+    } else if (view === 'brewery') {
       this._setTop(true, '', false);
-      this._renderBrand(id);
+      this._renderBrewery(id);
     } else if (view === 'add') {
       this._setTop(true, 'Neue Flasche', false);
       this._renderForm(null);
     } else if (view === 'edit') {
       this._setTop(true, 'Bearbeiten', false);
       this._renderForm(id);
-    } else if (view === 'brand-edit') {
-      this._setTop(true, 'Marke bearbeiten', false);
-      this._renderBrandForm(id);
+    } else if (view === 'brewery-edit') {
+      this._setTop(true, 'Brauerei bearbeiten', false);
+      this._renderBreweryForm(id);
     }
   },
 
@@ -465,9 +459,7 @@ const App = {
       if (this.filters.search) p.set('search', this.filters.search);
       if (this.filters.country) p.set('country', this.filters.country);
       const bottles = await apiFetch('/bottles?' + p);
-
       this._renderFilterChips(bottles);
-
       if (!bottles.length) {
         main.innerHTML = `<div class="empty">
           <div class="empty-icon">🍺</div>
@@ -476,13 +468,11 @@ const App = {
         </div>`;
         return;
       }
-
       main.innerHTML = `<div class="grid">${bottles.map(b => {
         const t = thumb(b.thumb);
         const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
         const f = b.country ? flag(b.country) + ' ' : '';
-        const meta = b.style ? `${styleIcon(b.style)} ${esc(b.style)}` : `${f}${esc(b.country||'')}`;
-        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.brand_name)}</div><div class="card-meta">${meta}</div></div></div>`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${f}${esc(b.brewery_name)}</div></div></div>`;
       }).join('')}</div>`;
     } catch(e) {
       main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
@@ -503,19 +493,19 @@ const App = {
     this._renderGrid();
   },
 
-  async _renderBrands() {
+  async _renderBreweries() {
     const main = document.getElementById('main');
     try {
-      const brands = await apiFetch('/brands');
-      if (!brands.length) {
-        main.innerHTML = `<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-title">Keine Marken</div><div class="empty-text">Füge die erste Flasche hinzu.</div></div>`;
+      const breweries = await apiFetch('/breweries');
+      if (!breweries.length) {
+        main.innerHTML = `<div class="empty"><div class="empty-icon">🏭</div><div class="empty-title">Keine Brauereien</div><div class="empty-text">Füge die erste Flasche hinzu.</div></div>`;
         return;
       }
-      main.innerHTML = `<div class="brand-list">${brands.map(br => {
+      main.innerHTML = `<div class="brand-list">${breweries.map(br => {
         const t = thumb(br.thumb);
-        const th = t ? `<img class="b-thumb" src="${esc(t)}" loading="lazy" alt="">` : `<div class="b-thumb-ph">🍺</div>`;
+        const th = t ? `<img class="b-thumb" src="${esc(t)}" loading="lazy" alt="">` : `<div class="b-thumb-ph">🏭</div>`;
         const sub = br.country ? `${flag(br.country)} ${esc(br.country)}` : '';
-        return `<div class="brand-item" onclick="App.go('brand',${br.id})">${th}<div class="b-info"><div class="b-name">${esc(br.name)}</div>${sub?`<div class="b-sub">${sub}</div>`:''}</div><div class="b-count">${br.bottle_count}</div></div>`;
+        return `<div class="brand-item" onclick="App.go('brewery',${br.id})">${th}<div class="b-info"><div class="b-name">${esc(br.name)}</div>${sub?`<div class="b-sub">${sub}</div>`:''}</div><div class="b-count">${br.bottle_count}</div></div>`;
       }).join('')}</div>`;
     } catch(e) {
       main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
@@ -526,27 +516,24 @@ const App = {
     const main = document.getElementById('main');
     try {
       const b = await apiFetch(`/bottles/${id}`);
-      document.getElementById('topbarTitle').textContent = b.brand_name;
-
+      document.getElementById('topbarTitle').textContent = b.bezeichnung;
       const gallery = b.photos.length
         ? b.photos.map(p=>`<img class="g-img" src="${esc(orig(p.filename))}" loading="lazy" alt="">`).join('')
         : `<div class="g-ph">${styleIcon(b.style)}</div>`;
-
       const dateStr = b.created_at
         ? new Date(b.created_at.replace(' ','T') + 'Z').toLocaleDateString('de-AT', {day:'2-digit',month:'2-digit',year:'numeric'})
         : '';
       const rows = [
+        `<div class="d-label">Brauerei</div><div class="d-value">${esc(b.brewery_name)}</div>`,
         b.style ? `<div class="d-label">Stil</div><div class="d-value">${styleIcon(b.style)} ${esc(b.style)}</div>` : '',
         b.country ? `<div class="d-label">Land</div><div class="d-value">${flag(b.country)} ${esc(b.country)}</div>` : '',
         dateStr ? `<div class="d-label">Hinzugefügt</div><div class="d-value">${dateStr}</div>` : '',
       ].filter(Boolean).join('');
-
       const notes = b.notes ? `<div class="info-card"><div class="d-label">Notizen &amp; Bewertung</div><div class="notes-box">${esc(b.notes)}</div></div>` : '';
-
       main.innerHTML = `<div class="detail">
         <div class="gallery">${gallery}</div>
         <div class="info-card">
-          <div class="d-brand">${esc(b.brand_name)}</div>
+          <div class="d-brand">${esc(b.bezeichnung)}</div>
           ${rows}
         </div>
         ${notes}
@@ -568,31 +555,31 @@ const App = {
     location.hash = 'grid';
   },
 
-  async _deleteBrand(id) {
-    if (!confirm('Marke wirklich löschen?')) return;
+  async _deleteBrewery(id) {
+    if (!confirm('Brauerei wirklich löschen?')) return;
     try {
-      await apiFetch(`/brands/${id}`, { method: 'DELETE' });
-      showToast('Marke gelöscht');
+      await apiFetch(`/breweries/${id}`, { method: 'DELETE' });
+      showToast('Brauerei gelöscht');
       this.history = [];
-      location.hash = 'brands';
+      location.hash = 'breweries';
     } catch(e) {
       alert(e.message);
     }
   },
 
-  async _renderBrandForm(id) {
+  async _renderBreweryForm(id) {
     const main = document.getElementById('main');
     try {
-      const { brand } = await apiFetch(`/brands/${id}/bottles`);
-      document.getElementById('topbarTitle').textContent = brand.name;
-      main.innerHTML = `<form class="form" id="brandForm" onsubmit="App._submitBrand(event,${id})">
+      const { brewery } = await apiFetch(`/breweries/${id}/bottles`);
+      document.getElementById('topbarTitle').textContent = brewery.name;
+      main.innerHTML = `<form class="form" id="breweryForm" onsubmit="App._submitBrewery(event,${id})">
         <div class="field">
-          <label>Markenname *</label>
-          <input id="fbName" type="text" value="${esc(brand.name)}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
+          <label>Brauerei-Name *</label>
+          <input id="fbName" type="text" value="${esc(brewery.name)}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
         </div>
         <div class="field">
           <label>Land (optional)</label>
-          <input id="fbCountry" type="text" value="${esc(brand.country||'')}" placeholder="z.B. Österreich">
+          <input id="fbCountry" type="text" value="${esc(brewery.country||'')}" placeholder="z.B. Österreich">
         </div>
         <button type="submit" class="submit-btn" id="submitBtn">Änderungen speichern</button>
       </form>`;
@@ -601,7 +588,7 @@ const App = {
     }
   },
 
-  async _submitBrand(e, id) {
+  async _submitBrewery(e, id) {
     e.preventDefault();
     const btn = document.getElementById('submitBtn');
     btn.disabled = true; btn.textContent = 'Speichern …';
@@ -609,10 +596,10 @@ const App = {
       const fd = new FormData();
       fd.append('name', document.getElementById('fbName').value.trim());
       fd.append('country', document.getElementById('fbCountry').value.trim());
-      await apiFetch(`/brands/${id}`, { method: 'PUT', body: fd });
-      showToast('Marke gespeichert!');
+      await apiFetch(`/breweries/${id}`, { method: 'PUT', body: fd });
+      showToast('Brauerei gespeichert!');
       this.history = [];
-      location.hash = `brand/${id}`;
+      location.hash = `brewery/${id}`;
     } catch(err) {
       showToast('Fehler: ' + err.message);
       btn.disabled = false;
@@ -620,24 +607,22 @@ const App = {
     }
   },
 
-  async _renderBrand(id) {
+  async _renderBrewery(id) {
     const main = document.getElementById('main');
     try {
-      const { brand, bottles } = await apiFetch(`/brands/${id}/bottles`);
-      document.getElementById('topbarTitle').textContent = brand.name;
-
+      const { brewery, bottles } = await apiFetch(`/breweries/${id}/bottles`);
+      document.getElementById('topbarTitle').textContent = brewery.name;
       const cards = bottles.length ? bottles.map(b => {
         const t = thumb(b.thumb);
         const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
-        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.style||'–')}</div><div class="card-meta">${b.style?styleIcon(b.style)+' '+esc(b.style):''}</div></div></div>`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${b.style ? styleIcon(b.style)+' '+esc(b.style) : ''}</div></div></div>`;
       }).join('') : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Keine Flaschen</div></div>';
-
-      const sub = brand.country ? `${flag(brand.country)} ${brand.country}` : '';
+      const sub = brewery.country ? `${flag(brewery.country)} ${brewery.country}` : '';
       main.innerHTML = `
-        <div class="brand-hero"><h2>${esc(brand.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
+        <div class="brand-hero"><h2>${esc(brewery.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
         <div class="action-row" style="padding:0 14px 8px">
-          <button class="btn btn-primary" onclick="App.go('brand-edit',${brand.id})">✏️ Bearbeiten</button>
-          <button class="btn btn-danger" onclick="App._deleteBrand(${brand.id})">🗑️ Löschen</button>
+          <button class="btn btn-primary" onclick="App.go('brewery-edit',${brewery.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-danger" onclick="App._deleteBrewery(${brewery.id})">🗑️ Löschen</button>
         </div>
         <div class="section-label">${bottles.length} Flasche${bottles.length!==1?'n':''}</div>
         <div class="grid">${cards}</div>`;
@@ -654,23 +639,25 @@ const App = {
       try { bottle = await apiFetch(`/bottles/${id}`); }
       catch(e) { main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div></div>`; return; }
     }
-
     const existingPhotos = (bottle?.photos||[]).map(p => `
       <div class="preview-item" id="ep${p.id}">
         <img src="${esc(thumb(p.filename))}" alt="">
         <button class="remove-btn" type="button" onclick="App._delExistingPhoto(${p.id})">✕</button>
       </div>`).join('');
-
     main.innerHTML = `<form class="form" id="form" onsubmit="App._submit(event,${id||'null'})">
       <div class="field">
-        <label>Marke *</label>
+        <label>Brauerei *</label>
         <div class="ac-wrap">
-          <input id="fBrand" type="text" value="${esc(bottle?.brand_name||'')}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
+          <input id="fBrewery" type="text" value="${esc(bottle?.brewery_name||'')}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
         </div>
       </div>
       <div class="field">
-        <label>Land (optional)</label>
+        <label>Land der Brauerei (optional)</label>
         <input id="fCountry" type="text" value="${esc(bottle?.country||'')}" placeholder="z.B. Österreich">
+      </div>
+      <div class="field">
+        <label>Bezeichnung / Marke *</label>
+        <input id="fBezeichnung" type="text" value="${esc(bottle?.bezeichnung||'')}" placeholder="z.B. Obertrumer Original" required autocomplete="off">
       </div>
       <div class="field">
         <label>Bierstil (optional)</label>
@@ -695,23 +682,21 @@ const App = {
       <button type="submit" class="submit-btn" id="submitBtn">${id?'Änderungen speichern':'Flasche hinzufügen'}</button>
     </form>`;
 
-    // Brand autocomplete
     makeAutocomplete(
-      document.getElementById('fBrand'),
+      document.getElementById('fBrewery'),
       async q => {
-        const r = await apiFetch('/brands/autocomplete?q=' + encodeURIComponent(q));
+        const r = await apiFetch('/breweries/autocomplete?q=' + encodeURIComponent(q));
         return r.map(b => ({
           html: `<div>${esc(b.name)}</div>${b.country?`<div class="ac-sub">${flag(b.country)} ${esc(b.country)}</div>`:''}`,
           name: b.name, country: b.country
         }));
       },
       item => {
-        document.getElementById('fBrand').value = item.name;
+        document.getElementById('fBrewery').value = item.name;
         if (item.country) document.getElementById('fCountry').value = item.country;
       }
     );
 
-    // Style autocomplete
     makeAutocomplete(
       document.getElementById('fStyle'),
       async q => {
@@ -721,7 +706,6 @@ const App = {
       item => { document.getElementById('fStyle').value = item.name; }
     );
 
-    // Drag-and-drop
     const area = document.getElementById('uploadArea');
     area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag'); });
     area.addEventListener('dragleave', () => area.classList.remove('drag'));
@@ -758,8 +742,9 @@ const App = {
     btn.disabled = true; btn.textContent = 'Speichern …';
     try {
       const fd = new FormData();
-      fd.append('brand_name', document.getElementById('fBrand').value.trim());
-      fd.append('brand_country', document.getElementById('fCountry').value.trim());
+      fd.append('brewery_name', document.getElementById('fBrewery').value.trim());
+      fd.append('brewery_country', document.getElementById('fCountry').value.trim());
+      fd.append('bezeichnung', document.getElementById('fBezeichnung').value.trim());
       fd.append('style', document.getElementById('fStyle').value.trim());
       fd.append('notes', document.getElementById('fNotes').value.trim());
       this._pending.filter(Boolean).forEach(f => fd.append('photos', f));
