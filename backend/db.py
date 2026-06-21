@@ -144,6 +144,16 @@ def delete_bottle(bottle_id):
         conn.execute("DELETE FROM bottles WHERE id=?", (bottle_id,))
 
 
+def delete_brand(brand_id):
+    with db() as conn:
+        count = conn.execute("SELECT COUNT(*) FROM bottles WHERE brand_id=?", (brand_id,)).fetchone()[0]
+        if count:
+            plural = 'n' if count != 1 else ''
+            return False, f"Marke hat noch {count} Flasche{plural} — erst die Einträge ändern oder löschen"
+        conn.execute("DELETE FROM brands WHERE id=?", (brand_id,))
+        return True, None
+
+
 def add_photo(bottle_id, filename):
     with db() as conn:
         conn.execute(

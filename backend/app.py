@@ -129,6 +129,12 @@ def brands_list():
     return ok(db.list_brands())
 
 
+@app.route('/api/brands/<int:brand_id>', methods=['DELETE'])
+def brand_delete(brand_id):
+    success, error = db.delete_brand(brand_id)
+    return ok(None) if success else err(error)
+
+
 @app.route('/api/brands/<int:brand_id>/bottles', methods=['GET'])
 def brand_bottles(brand_id):
     brand, bottles = db.get_brand_with_bottles(brand_id)

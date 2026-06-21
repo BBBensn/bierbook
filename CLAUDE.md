@@ -13,7 +13,7 @@ Projekt-spezifischer Kontext. Ergänzt `~/.claude/CLAUDE.md`. Ablageort: `~/Docu
 
 - **Name:** BierBook
 - **Domain:** bierbook.bensn.at
-- **Version:** v1.0.0 ✅ deployed 2026-06-21
+- **Version:** v1.0.1 ✅ deployed 2026-06-21
 - **Status:** active
 - **Stack:** Vanilla JS + Flask + SQLite
 

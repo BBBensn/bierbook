@@ -199,10 +199,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .toast{
   position:fixed;bottom:calc(var(--nav-h) + 14px);left:50%;
   transform:translateX(-50%) translateY(100px);
+  opacity:0;pointer-events:none;
   background:#1C1917;color:#fff;padding:9px 18px;border-radius:24px;
-  font-size:14px;font-weight:500;z-index:999;transition:transform .25s;white-space:nowrap
+  font-size:14px;font-weight:500;z-index:999;
+  transition:transform .25s,opacity .25s;white-space:nowrap
 }
-.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 </style>
 </head>
 <body>
@@ -518,9 +520,13 @@ const App = {
         ? b.photos.map(p=>`<img class="g-img" src="${esc(orig(p.filename))}" loading="lazy" alt="">`).join('')
         : `<div class="g-ph">${styleIcon(b.style)}</div>`;
 
+      const dateStr = b.created_at
+        ? new Date(b.created_at.replace(' ','T') + 'Z').toLocaleDateString('de-AT', {day:'2-digit',month:'2-digit',year:'numeric'})
+        : '';
       const rows = [
         b.style ? `<div class="d-label">Stil</div><div class="d-value">${styleIcon(b.style)} ${esc(b.style)}</div>` : '',
         b.country ? `<div class="d-label">Land</div><div class="d-value">${flag(b.country)} ${esc(b.country)}</div>` : '',
+        dateStr ? `<div class="d-label">Hinzugefügt</div><div class="d-value">${dateStr}</div>` : '',
       ].filter(Boolean).join('');
 
       const notes = b.notes ? `<div class="info-card"><div class="d-label">Notizen &amp; Bewertung</div><div class="notes-box">${esc(b.notes)}</div></div>` : '';
@@ -550,6 +556,18 @@ const App = {
     location.hash = 'grid';
   },
 
+  async _deleteBrand(id) {
+    if (!confirm('Marke wirklich löschen?')) return;
+    try {
+      await apiFetch(`/brands/${id}`, { method: 'DELETE' });
+      showToast('Marke gelöscht');
+      this.history = [];
+      location.hash = 'brands';
+    } catch(e) {
+      alert(e.message);
+    }
+  },
+
   async _renderBrand(id) {
     const main = document.getElementById('main');
     try {
@@ -565,6 +583,7 @@ const App = {
       const sub = brand.country ? `${flag(brand.country)} ${brand.country}` : '';
       main.innerHTML = `
         <div class="brand-hero"><h2>${esc(brand.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
+        <div style="padding:0 14px 8px"><button class="btn btn-danger" onclick="App._deleteBrand(${brand.id})">🗑️ Marke löschen</button></div>
         <div class="section-label">${bottles.length} Flasche${bottles.length!==1?'n':''}</div>
         <div class="grid">${cards}</div>`;
     } catch(e) {
