@@ -71,7 +71,6 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 .card-placeholder{
   width:100%;aspect-ratio:1;
   background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
-  display:flex;align-items:center;justify-content:center;font-size:44px
 }
 .card-body{padding:9px 11px 11px}
 .card-brand{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -88,7 +87,6 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 .b-thumb-ph{
   width:54px;height:54px;border-radius:10px;flex-shrink:0;
   background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
-  display:flex;align-items:center;justify-content:center;font-size:24px
 }
 .b-info{flex:1;min-width:0}
 .b-name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -102,7 +100,6 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 .g-ph{
   width:220px;height:220px;border-radius:12px;flex-shrink:0;
   background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
-  display:flex;align-items:center;justify-content:center;font-size:80px
 }
 .info-card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
 .d-brand{font-size:22px;font-weight:800;margin-bottom:4px}
@@ -151,7 +148,6 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 }
 .upload-area:hover,.upload-area.drag{border-color:var(--primary);background:#FEF3C7}
 .upload-area input{display:none}
-.upload-icon{font-size:30px;margin-bottom:6px}
 .upload-text{font-size:14px;line-height:1.5}
 .preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
 .preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg)}
@@ -176,7 +172,6 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 
 /* ── Empty / loading ── */
 .empty{padding:56px 24px;text-align:center;color:var(--text-muted)}
-.empty-icon{font-size:52px;margin-bottom:14px}
 .empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
 .empty-text{font-size:14px;line-height:1.5}
 .loading{padding:40px;text-align:center;color:var(--text-muted);font-size:14px}
@@ -223,7 +218,7 @@ header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
       <button class="btn-icon hidden" id="backBtn" onclick="App.goBack()">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       </button>
-      <span class="topbar-logo" id="topbarLogo">🍺 BierBook</span>
+      <span class="topbar-logo" id="topbarLogo">BierBook</span>
       <span id="topbarTitle"></span>
       <button class="btn-icon" id="searchBtn" onclick="App.toggleSearch()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -266,59 +261,14 @@ const API = '/api';
 
 async function apiFetch(path, opts = {}) {
   const r = await fetch(API + path, opts);
-  const j = await r.json();
+  let j;
+  try { j = await r.json(); } catch(_) { throw new Error(`Server-Fehler (${r.status})`); }
   if (!j.success) throw new Error(j.error || 'Fehler');
   return j.data;
 }
 
 function esc(s) {
   return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function styleIcon(s) {
-  if (!s) return '🍶';
-  const t = s.toLowerCase();
-  if (/ipa|pale ale|apa|neipa/.test(t)) return '🌿';
-  if (/stout|porter|schwarzbier/.test(t)) return '🏴';
-  if (/weizen|weißbier|hefeweizen|wheat/.test(t)) return '🌾';
-  if (/sour|lambic|gose|kriek|berliner/.test(t)) return '🍋';
-  if (/bock|doppelbock/.test(t)) return '🐐';
-  if (/rauch/.test(t)) return '💨';
-  if (/saison|farmhouse/.test(t)) return '🌸';
-  if (/märzen|oktoberfest/.test(t)) return '🍂';
-  if (/dunkel|dark/.test(t)) return '🌑';
-  if (/kölsch|altbier/.test(t)) return '🍻';
-  if (/radler|shandy/.test(t)) return '☀️';
-  if (/lager|pils|hell/.test(t)) return '🍺';
-  return '🍶';
-}
-
-function flag(c) {
-  if (!c) return '';
-  const m = {
-    'österreich':'🇦🇹','austria':'🇦🇹','at':'🇦🇹',
-    'deutschland':'🇩🇪','germany':'🇩🇪','de':'🇩🇪',
-    'tschechien':'🇨🇿','czech republic':'🇨🇿','czechia':'🇨🇿','cz':'🇨🇿',
-    'belgien':'🇧🇪','belgium':'🇧🇪','be':'🇧🇪',
-    'niederlande':'🇳🇱','netherlands':'🇳🇱','nl':'🇳🇱','holland':'🇳🇱',
-    'usa':'🇺🇸','united states':'🇺🇸','us':'🇺🇸',
-    'großbritannien':'🇬🇧','uk':'🇬🇧','england':'🇬🇧',
-    'irland':'🇮🇪','ireland':'🇮🇪','ie':'🇮🇪',
-    'dänemark':'🇩🇰','denmark':'🇩🇰','dk':'🇩🇰',
-    'schweden':'🇸🇪','sweden':'🇸🇪','se':'🇸🇪',
-    'norwegen':'🇳🇴','norway':'🇳🇴','no':'🇳🇴',
-    'finnland':'🇫🇮','finland':'🇫🇮','fi':'🇫🇮',
-    'schweiz':'🇨🇭','switzerland':'🇨🇭','ch':'🇨🇭',
-    'frankreich':'🇫🇷','france':'🇫🇷','fr':'🇫🇷',
-    'italien':'🇮🇹','italy':'🇮🇹','it':'🇮🇹',
-    'spanien':'🇪🇸','spain':'🇪🇸','es':'🇪🇸',
-    'polen':'🇵🇱','poland':'🇵🇱','pl':'🇵🇱',
-    'japan':'🇯🇵','jp':'🇯🇵',
-    'mexiko':'🇲🇽','mexico':'🇲🇽','mx':'🇲🇽',
-    'kanada':'🇨🇦','canada':'🇨🇦','ca':'🇨🇦',
-    'australien':'🇦🇺','australia':'🇦🇺','au':'🇦🇺',
-  };
-  return m[c.toLowerCase()] || '🌍';
 }
 
 function thumb(f) { return f ? `/uploads/thumbs/${f}` : null; }
@@ -462,7 +412,6 @@ const App = {
       this._renderFilterChips(bottles);
       if (!bottles.length) {
         main.innerHTML = `<div class="empty">
-          <div class="empty-icon">🍺</div>
           <div class="empty-title">${this.filters.search || this.filters.country ? 'Keine Treffer' : 'Noch keine Flaschen'}</div>
           <div class="empty-text">${this.filters.search || this.filters.country ? 'Andere Suchbegriffe probieren.' : 'Tippe auf ＋ um die erste Flasche hinzuzufügen.'}</div>
         </div>`;
@@ -470,12 +419,11 @@ const App = {
       }
       main.innerHTML = `<div class="grid">${bottles.map(b => {
         const t = thumb(b.thumb);
-        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
-        const f = b.country ? flag(b.country) + ' ' : '';
-        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${f}${esc(b.brewery_name)}</div></div></div>`;
+        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder"></div>`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${esc(b.brewery_name)}</div></div></div>`;
       }).join('')}</div>`;
     } catch(e) {
-      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+      main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
     }
   },
 
@@ -484,7 +432,7 @@ const App = {
     const row = document.getElementById('filterRow');
     if (!countries.length) { row.innerHTML=''; return; }
     row.innerHTML = countries.map(c =>
-      `<div class="filter-chip${this.filters.country===c?' active':''}" onclick="App._filterCountry('${esc(c)}')">${flag(c)} ${esc(c)}</div>`
+      `<div class="filter-chip${this.filters.country===c?' active':''}" onclick="App._filterCountry('${esc(c)}')">${esc(c)}</div>`
     ).join('');
   },
 
@@ -498,17 +446,17 @@ const App = {
     try {
       const breweries = await apiFetch('/breweries');
       if (!breweries.length) {
-        main.innerHTML = `<div class="empty"><div class="empty-icon">🏭</div><div class="empty-title">Keine Brauereien</div><div class="empty-text">Füge die erste Flasche hinzu.</div></div>`;
+        main.innerHTML = `<div class="empty"><div class="empty-title">Keine Brauereien</div><div class="empty-text">Füge die erste Flasche hinzu.</div></div>`;
         return;
       }
       main.innerHTML = `<div class="brand-list">${breweries.map(br => {
         const t = thumb(br.thumb);
-        const th = t ? `<img class="b-thumb" src="${esc(t)}" loading="lazy" alt="">` : `<div class="b-thumb-ph">🏭</div>`;
-        const sub = br.country ? `${flag(br.country)} ${esc(br.country)}` : '';
+        const th = t ? `<img class="b-thumb" src="${esc(t)}" loading="lazy" alt="">` : `<div class="b-thumb-ph"></div>`;
+        const sub = br.country ? esc(br.country) : '';
         return `<div class="brand-item" onclick="App.go('brewery',${br.id})">${th}<div class="b-info"><div class="b-name">${esc(br.name)}</div>${sub?`<div class="b-sub">${sub}</div>`:''}</div><div class="b-count">${br.bottle_count}</div></div>`;
       }).join('')}</div>`;
     } catch(e) {
-      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+      main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
     }
   },
 
@@ -519,14 +467,14 @@ const App = {
       document.getElementById('topbarTitle').textContent = b.bezeichnung;
       const gallery = b.photos.length
         ? b.photos.map(p=>`<img class="g-img" src="${esc(orig(p.filename))}" loading="lazy" alt="">`).join('')
-        : `<div class="g-ph">${styleIcon(b.style)}</div>`;
+        : `<div class="g-ph"></div>`;
       const dateStr = b.created_at
         ? new Date(b.created_at.replace(' ','T') + 'Z').toLocaleDateString('de-AT', {day:'2-digit',month:'2-digit',year:'numeric'})
         : '';
       const rows = [
         `<div class="d-label">Brauerei</div><div class="d-value">${esc(b.brewery_name)}</div>`,
-        b.style ? `<div class="d-label">Stil</div><div class="d-value">${styleIcon(b.style)} ${esc(b.style)}</div>` : '',
-        b.country ? `<div class="d-label">Land</div><div class="d-value">${flag(b.country)} ${esc(b.country)}</div>` : '',
+        b.style ? `<div class="d-label">Stil</div><div class="d-value">${esc(b.style)}</div>` : '',
+        b.country ? `<div class="d-label">Land</div><div class="d-value">${esc(b.country)}</div>` : '',
         dateStr ? `<div class="d-label">Hinzugefügt</div><div class="d-value">${dateStr}</div>` : '',
       ].filter(Boolean).join('');
       const notes = b.notes ? `<div class="info-card"><div class="d-label">Notizen &amp; Bewertung</div><div class="notes-box">${esc(b.notes)}</div></div>` : '';
@@ -538,12 +486,12 @@ const App = {
         </div>
         ${notes}
         <div class="action-row">
-          <button class="btn btn-primary" onclick="App.go('edit',${b.id})">✏️ Bearbeiten</button>
-          <button class="btn btn-danger" onclick="App._deleteBottle(${b.id})">🗑️ Löschen</button>
+          <button class="btn btn-primary" onclick="App.go('edit',${b.id})">Bearbeiten</button>
+          <button class="btn btn-danger" onclick="App._deleteBottle(${b.id})">Löschen</button>
         </div>
       </div>`;
     } catch(e) {
-      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+      main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
     }
   },
 
@@ -584,7 +532,7 @@ const App = {
         <button type="submit" class="submit-btn" id="submitBtn">Änderungen speichern</button>
       </form>`;
     } catch(e) {
-      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+      main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
     }
   },
 
@@ -614,20 +562,20 @@ const App = {
       document.getElementById('topbarTitle').textContent = brewery.name;
       const cards = bottles.length ? bottles.map(b => {
         const t = thumb(b.thumb);
-        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
-        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${b.style ? styleIcon(b.style)+' '+esc(b.style) : ''}</div></div></div>`;
-      }).join('') : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Keine Flaschen</div></div>';
-      const sub = brewery.country ? `${flag(brewery.country)} ${brewery.country}` : '';
+        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder"></div>`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.bezeichnung)}</div><div class="card-meta">${b.style ? esc(b.style) : ''}</div></div></div>`;
+      }).join('') : '<div class="empty"><div class="empty-title">Keine Flaschen</div></div>';
+      const sub = brewery.country ? esc(brewery.country) : '';
       main.innerHTML = `
         <div class="brand-hero"><h2>${esc(brewery.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
         <div class="action-row" style="padding:0 14px 8px">
-          <button class="btn btn-primary" onclick="App.go('brewery-edit',${brewery.id})">✏️ Bearbeiten</button>
-          <button class="btn btn-danger" onclick="App._deleteBrewery(${brewery.id})">🗑️ Löschen</button>
+          <button class="btn btn-primary" onclick="App.go('brewery-edit',${brewery.id})">Bearbeiten</button>
+          <button class="btn btn-danger" onclick="App._deleteBrewery(${brewery.id})">Löschen</button>
         </div>
         <div class="section-label">${bottles.length} Flasche${bottles.length!==1?'n':''}</div>
         <div class="grid">${cards}</div>`;
     } catch(e) {
-      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+      main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
     }
   },
 
@@ -637,7 +585,7 @@ const App = {
     let bottle = null;
     if (id) {
       try { bottle = await apiFetch(`/bottles/${id}`); }
-      catch(e) { main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div></div>`; return; }
+      catch(e) { main.innerHTML = `<div class="empty"><div class="empty-title">Fehler</div></div>`; return; }
     }
     const existingPhotos = (bottle?.photos||[]).map(p => `
       <div class="preview-item" id="ep${p.id}">
@@ -674,7 +622,6 @@ const App = {
         <label>${id?'Fotos hinzufügen':'Fotos (optional)'}</label>
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fPhotos').click()">
           <input type="file" id="fPhotos" accept="image/*" multiple onchange="App._addFiles(event)">
-          <div class="upload-icon">📷</div>
           <div class="upload-text">Tippe zum Auswählen<br><small>Mehrere Fotos möglich</small></div>
         </div>
         <div class="preview-grid" id="previewGrid"></div>
@@ -687,7 +634,7 @@ const App = {
       async q => {
         const r = await apiFetch('/breweries/autocomplete?q=' + encodeURIComponent(q));
         return r.map(b => ({
-          html: `<div>${esc(b.name)}</div>${b.country?`<div class="ac-sub">${flag(b.country)} ${esc(b.country)}</div>`:''}`,
+          html: `<div>${esc(b.name)}</div>${b.country?`<div class="ac-sub">${esc(b.country)}</div>`:''}`,
           name: b.name, country: b.country
         }));
       },
@@ -701,7 +648,7 @@ const App = {
       document.getElementById('fStyle'),
       async q => {
         const r = await apiFetch('/styles/autocomplete?q=' + encodeURIComponent(q));
-        return r.map(s => ({ html: `<div>${styleIcon(s)} ${esc(s)}</div>`, name: s }));
+        return r.map(s => ({ html: `<div>${esc(s)}</div>`, name: s }));
       },
       item => { document.getElementById('fStyle').value = item.name; }
     );
@@ -761,6 +708,10 @@ const App = {
 };
 
 App.init();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
