@@ -129,6 +129,15 @@ def brands_list():
     return ok(db.list_brands())
 
 
+@app.route('/api/brands/<int:brand_id>', methods=['PUT'])
+def brand_update(brand_id):
+    name = request.form.get('name', '').strip()
+    if not name:
+        return err('Markenname erforderlich')
+    success, error = db.update_brand(brand_id, name, request.form.get('country', '').strip())
+    return ok({'id': brand_id}) if success else err(error)
+
+
 @app.route('/api/brands/<int:brand_id>', methods=['DELETE'])
 def brand_delete(brand_id):
     success, error = db.delete_brand(brand_id)

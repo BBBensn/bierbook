@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BierBook">
+<meta name="theme-color" content="#D97706">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>BierBook</title>
 <style>
 :root {
@@ -24,6 +30,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #app{height:100%;display:flex;flex-direction:column;max-width:600px;margin:0 auto}
 
 /* ── Top bar ── */
+header{background:var(--surface);padding-top:env(safe-area-inset-top,0px)}
 .topbar{
   height:var(--top-h);background:var(--surface);display:flex;align-items:center;
   padding:0 12px;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;
@@ -113,6 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center
 }
 .btn:active{opacity:.8}
+.btn-primary{background:var(--primary);color:#fff;flex:1}
 .btn-outline{background:var(--bg);color:var(--text);flex:1}
 .btn-danger{background:#FEE2E2;color:#DC2626}
 
@@ -175,12 +183,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* ── Bottom nav ── */
 .bottom-nav{
-  height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);
+  background:var(--surface);border-top:1px solid var(--border);
   display:flex;align-items:center;flex-shrink:0;
-  padding-bottom:env(safe-area-inset-bottom,0px)
+  padding-top:10px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))
 }
 .nav-btn{
-  flex:1;height:100%;border:none;background:none;display:flex;flex-direction:column;
+  flex:1;height:44px;border:none;background:none;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:3px;cursor:pointer;
   color:var(--text-muted);-webkit-tap-highlight-color:transparent
 }
@@ -197,7 +206,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* ── Toast ── */
 .toast{
-  position:fixed;bottom:calc(var(--nav-h) + 14px);left:50%;
+  position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);left:50%;
   transform:translateX(-50%) translateY(100px);
   opacity:0;pointer-events:none;
   background:#1C1917;color:#fff;padding:9px 18px;border-radius:24px;
@@ -443,6 +452,9 @@ const App = {
     } else if (view === 'edit') {
       this._setTop(true, 'Bearbeiten', false);
       this._renderForm(id);
+    } else if (view === 'brand-edit') {
+      this._setTop(true, 'Marke bearbeiten', false);
+      this._renderBrandForm(id);
     }
   },
 
@@ -539,7 +551,7 @@ const App = {
         </div>
         ${notes}
         <div class="action-row">
-          <button class="btn btn-outline" onclick="App.go('edit',${b.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-primary" onclick="App.go('edit',${b.id})">✏️ Bearbeiten</button>
           <button class="btn btn-danger" onclick="App._deleteBottle(${b.id})">🗑️ Löschen</button>
         </div>
       </div>`;
@@ -568,6 +580,46 @@ const App = {
     }
   },
 
+  async _renderBrandForm(id) {
+    const main = document.getElementById('main');
+    try {
+      const { brand } = await apiFetch(`/brands/${id}/bottles`);
+      document.getElementById('topbarTitle').textContent = brand.name;
+      main.innerHTML = `<form class="form" id="brandForm" onsubmit="App._submitBrand(event,${id})">
+        <div class="field">
+          <label>Markenname *</label>
+          <input id="fbName" type="text" value="${esc(brand.name)}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Land (optional)</label>
+          <input id="fbCountry" type="text" value="${esc(brand.country||'')}" placeholder="z.B. Österreich">
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">Änderungen speichern</button>
+      </form>`;
+    } catch(e) {
+      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  },
+
+  async _submitBrand(e, id) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Speichern …';
+    try {
+      const fd = new FormData();
+      fd.append('name', document.getElementById('fbName').value.trim());
+      fd.append('country', document.getElementById('fbCountry').value.trim());
+      await apiFetch(`/brands/${id}`, { method: 'PUT', body: fd });
+      showToast('Marke gespeichert!');
+      this.history = [];
+      location.hash = `brand/${id}`;
+    } catch(err) {
+      showToast('Fehler: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Änderungen speichern';
+    }
+  },
+
   async _renderBrand(id) {
     const main = document.getElementById('main');
     try {
@@ -583,7 +635,10 @@ const App = {
       const sub = brand.country ? `${flag(brand.country)} ${brand.country}` : '';
       main.innerHTML = `
         <div class="brand-hero"><h2>${esc(brand.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
-        <div style="padding:0 14px 8px"><button class="btn btn-danger" onclick="App._deleteBrand(${brand.id})">🗑️ Marke löschen</button></div>
+        <div class="action-row" style="padding:0 14px 8px">
+          <button class="btn btn-primary" onclick="App.go('brand-edit',${brand.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-danger" onclick="App._deleteBrand(${brand.id})">🗑️ Löschen</button>
+        </div>
         <div class="section-label">${bottles.length} Flasche${bottles.length!==1?'n':''}</div>
         <div class="grid">${cards}</div>`;
     } catch(e) {

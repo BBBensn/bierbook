@@ -144,6 +144,18 @@ def delete_bottle(bottle_id):
         conn.execute("DELETE FROM bottles WHERE id=?", (bottle_id,))
 
 
+def update_brand(brand_id, name, country):
+    try:
+        with db() as conn:
+            conn.execute(
+                "UPDATE brands SET name=?, country=? WHERE id=?",
+                (name, country or None, brand_id)
+            )
+        return True, None
+    except sqlite3.IntegrityError:
+        return False, "Eine Marke mit diesem Namen existiert bereits"
+
+
 def delete_brand(brand_id):
     with db() as conn:
         count = conn.execute("SELECT COUNT(*) FROM bottles WHERE brand_id=?", (brand_id,)).fetchone()[0]

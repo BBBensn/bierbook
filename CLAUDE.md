@@ -13,7 +13,7 @@ Projekt-spezifischer Kontext. Ergänzt `~/.claude/CLAUDE.md`. Ablageort: `~/Docu
 
 - **Name:** BierBook
 - **Domain:** bierbook.bensn.at
-- **Version:** v1.0.1 ✅ deployed 2026-06-21
+- **Version:** v1.1.0 ✅ deployed 2026-06-21
 - **Status:** active
 - **Stack:** Vanilla JS + Flask + SQLite
 
@@ -154,7 +154,8 @@ Begründung: Einziger Nutzer (Vater), keine sensiblen Daten (Bierfotos/Notizen),
 |Version|Feature|Status|
 |---|---|---|
 |v1.0.0|MVP: Flaschen anlegen/anzeigen, Marken-Autocomplete, Fotos, Suche/Filter, Markenansicht|✅ done|
-|v1.1.0|Offline-Fähigkeit (PWA, Service Worker, lokale Queue)|geplant|
+|v1.1.0|PWA-Fix (Safe Area), Marke bearbeiten, App-Icon, Button-Konsistenz|✅ done|
+|v1.2.0|Offline-Fähigkeit (Service Worker, lokale Queue)|geplant|
 
 ---
 
