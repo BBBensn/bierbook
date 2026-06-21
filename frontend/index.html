@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>BierBook</title>
+<style>
+:root {
+  --bg: #F5EFE6;
+  --surface: #FFFFFF;
+  --primary: #D97706;
+  --primary-dk: #B45309;
+  --text: #1C1917;
+  --text-muted: #78716C;
+  --border: #E7E5E4;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --nav-h: 64px;
+  --top-h: 56px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+#app{height:100%;display:flex;flex-direction:column;max-width:600px;margin:0 auto}
+
+/* ── Top bar ── */
+.topbar{
+  height:var(--top-h);background:var(--surface);display:flex;align-items:center;
+  padding:0 12px;gap:8px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.topbar-logo{font-size:20px;font-weight:800;color:var(--primary);letter-spacing:-0.5px;flex:1}
+#topbarTitle{font-size:17px;font-weight:600;flex:1;text-align:center;display:none}
+.btn-icon{
+  width:36px;height:36px;border:none;background:none;border-radius:8px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text-muted);flex-shrink:0;
+}
+.btn-icon:active{background:var(--bg)}
+.btn-icon.hidden{visibility:hidden}
+
+/* ── Search bar ── */
+.search-wrap{background:var(--surface);padding:10px 14px 12px;border-bottom:1px solid var(--border);display:none;flex-shrink:0}
+.search-wrap.open{display:block}
+.search-row{display:flex;align-items:center;background:var(--bg);border-radius:10px;padding:8px 12px;gap:8px}
+.search-row input{border:none;background:none;flex:1;font-size:15px;outline:none;color:var(--text)}
+.filter-row{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}
+.filter-chip{
+  flex-shrink:0;padding:4px 12px;border-radius:20px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;cursor:pointer;color:var(--text-muted);white-space:nowrap
+}
+.filter-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ── Main ── */
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* ── Grid ── */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px}
+.card{
+  background:var(--surface);border-radius:var(--radius);overflow:hidden;
+  box-shadow:var(--shadow);cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.card:active{opacity:.85}
+.card-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--bg);display:block}
+.card-placeholder{
+  width:100%;aspect-ratio:1;
+  background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
+  display:flex;align-items:center;justify-content:center;font-size:44px
+}
+.card-body{padding:9px 11px 11px}
+.card-brand{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-meta{font-size:12px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Brands list ── */
+.brand-list{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.brand-item{
+  background:var(--surface);border-radius:var(--radius);display:flex;align-items:center;
+  gap:14px;padding:14px;box-shadow:var(--shadow);cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.brand-item:active{opacity:.85}
+.b-thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.b-thumb-ph{
+  width:54px;height:54px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
+  display:flex;align-items:center;justify-content:center;font-size:24px
+}
+.b-info{flex:1;min-width:0}
+.b-name{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
+.b-count{font-size:13px;color:var(--text-muted);font-weight:600;background:var(--bg);padding:4px 10px;border-radius:20px;flex-shrink:0}
+
+/* ── Detail ── */
+.detail{padding:14px;display:flex;flex-direction:column;gap:12px}
+.gallery{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.g-img{width:220px;height:220px;object-fit:cover;border-radius:12px;flex-shrink:0}
+.g-ph{
+  width:220px;height:220px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#F5EFE6 0%,#EDE0CE 100%);
+  display:flex;align-items:center;justify-content:center;font-size:80px
+}
+.info-card{background:var(--surface);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.d-brand{font-size:22px;font-weight:800;margin-bottom:4px}
+.d-style{font-size:15px;color:var(--text-muted);margin-bottom:10px}
+.d-label{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:3px;margin-top:10px}
+.d-label:first-child{margin-top:0}
+.d-value{font-size:15px;color:var(--text)}
+.notes-box{
+  background:var(--bg);border-radius:8px;padding:12px;
+  font-size:15px;line-height:1.6;color:var(--text);white-space:pre-wrap
+}
+.action-row{display:flex;gap:10px}
+.btn{
+  padding:12px 16px;border-radius:10px;border:none;font-size:15px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center
+}
+.btn:active{opacity:.8}
+.btn-outline{background:var(--bg);color:var(--text);flex:1}
+.btn-danger{background:#FEE2E2;color:#DC2626}
+
+/* ── Form ── */
+.form{padding:14px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px}
+.field input,.field textarea{
+  padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;
+  font-size:16px;color:var(--text);background:var(--surface);outline:none;
+  font-family:inherit;-webkit-appearance:none;transition:border-color .15s
+}
+.field input:focus,.field textarea:focus{border-color:var(--primary)}
+.field textarea{min-height:96px;resize:vertical;line-height:1.5}
+.ac-wrap{position:relative}
+.ac-drop{
+  position:absolute;top:100%;left:0;right:0;background:var(--surface);
+  border:1.5px solid var(--border);border-top:none;border-radius:0 0 10px 10px;
+  box-shadow:var(--shadow);z-index:200;max-height:200px;overflow-y:auto
+}
+.ac-item{padding:10px 13px;cursor:pointer;font-size:15px;border-bottom:1px solid var(--border)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.focused{background:var(--bg)}
+.ac-sub{font-size:12px;color:var(--text-muted);margin-top:1px}
+.upload-area{
+  border:2px dashed var(--border);border-radius:var(--radius);padding:22px;
+  text-align:center;cursor:pointer;color:var(--text-muted);transition:border-color .15s,background .15s
+}
+.upload-area:hover,.upload-area.drag{border-color:var(--primary);background:#FEF3C7}
+.upload-area input{display:none}
+.upload-icon{font-size:30px;margin-bottom:6px}
+.upload-text{font-size:14px;line-height:1.5}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.preview-item{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--bg)}
+.preview-item img{width:100%;height:100%;object-fit:cover}
+.remove-btn{
+  position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;
+  background:rgba(0,0,0,.6);color:#fff;border:none;font-size:11px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center
+}
+.submit-btn{
+  padding:15px;background:var(--primary);color:#fff;border:none;
+  border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;width:100%
+}
+.submit-btn:active{background:var(--primary-dk)}
+.submit-btn:disabled{opacity:.5}
+
+/* ── Brand hero ── */
+.brand-hero{padding:16px 14px 8px}
+.brand-hero h2{font-size:22px;font-weight:800}
+.brand-hero .sub{font-size:14px;color:var(--text-muted);margin-top:3px}
+.section-label{padding:10px 14px 4px;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted)}
+
+/* ── Empty / loading ── */
+.empty{padding:56px 24px;text-align:center;color:var(--text-muted)}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-title{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty-text{font-size:14px;line-height:1.5}
+.loading{padding:40px;text-align:center;color:var(--text-muted);font-size:14px}
+
+/* ── Bottom nav ── */
+.bottom-nav{
+  height:var(--nav-h);background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:center;flex-shrink:0;
+  padding-bottom:env(safe-area-inset-bottom,0px)
+}
+.nav-btn{
+  flex:1;height:100%;border:none;background:none;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;cursor:pointer;
+  color:var(--text-muted);-webkit-tap-highlight-color:transparent
+}
+.nav-btn.active{color:var(--primary)}
+.nav-icon{font-size:20px;line-height:1}
+.nav-label{font-size:10px;font-weight:500}
+.nav-add{
+  background:var(--primary);color:#fff;border-radius:14px;width:56px;height:42px;
+  flex:none;margin:0 20px;font-size:22px;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(217,119,6,.4);-webkit-tap-highlight-color:transparent
+}
+.nav-add:active{background:var(--primary-dk)}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:calc(var(--nav-h) + 14px);left:50%;
+  transform:translateX(-50%) translateY(100px);
+  background:#1C1917;color:#fff;padding:9px 18px;border-radius:24px;
+  font-size:14px;font-weight:500;z-index:999;transition:transform .25s;white-space:nowrap
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="topbar">
+      <button class="btn-icon hidden" id="backBtn" onclick="App.goBack()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="topbar-logo" id="topbarLogo">🍺 BierBook</span>
+      <span id="topbarTitle"></span>
+      <button class="btn-icon" id="searchBtn" onclick="App.toggleSearch()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </button>
+    </div>
+    <div class="search-wrap" id="searchWrap">
+      <div class="search-row">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Marke, Stil, Land …" oninput="App.onSearch()">
+      </div>
+      <div class="filter-row" id="filterRow"></div>
+    </div>
+  </header>
+
+  <main id="main"></main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="navGrid" onclick="App.go('grid')">
+      <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <span class="nav-label">Sammlung</span>
+    </button>
+    <button class="nav-add" onclick="App.go('add')" title="Flasche hinzufügen">＋</button>
+    <button class="nav-btn" id="navBrands" onclick="App.go('brands')">
+      <svg class="nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+        <line x1="7" y1="7" x2="7.01" y2="7" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <span class="nav-label">Marken</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '/api';
+
+async function apiFetch(path, opts = {}) {
+  const r = await fetch(API + path, opts);
+  const j = await r.json();
+  if (!j.success) throw new Error(j.error || 'Fehler');
+  return j.data;
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function styleIcon(s) {
+  if (!s) return '🍶';
+  const t = s.toLowerCase();
+  if (/ipa|pale ale|apa|neipa/.test(t)) return '🌿';
+  if (/stout|porter|schwarzbier/.test(t)) return '🏴';
+  if (/weizen|weißbier|hefeweizen|wheat/.test(t)) return '🌾';
+  if (/sour|lambic|gose|kriek|berliner/.test(t)) return '🍋';
+  if (/bock|doppelbock/.test(t)) return '🐐';
+  if (/rauch/.test(t)) return '💨';
+  if (/saison|farmhouse/.test(t)) return '🌸';
+  if (/märzen|oktoberfest/.test(t)) return '🍂';
+  if (/dunkel|dark/.test(t)) return '🌑';
+  if (/kölsch|altbier/.test(t)) return '🍻';
+  if (/radler|shandy/.test(t)) return '☀️';
+  if (/lager|pils|hell/.test(t)) return '🍺';
+  return '🍶';
+}
+
+function flag(c) {
+  if (!c) return '';
+  const m = {
+    'österreich':'🇦🇹','austria':'🇦🇹','at':'🇦🇹',
+    'deutschland':'🇩🇪','germany':'🇩🇪','de':'🇩🇪',
+    'tschechien':'🇨🇿','czech republic':'🇨🇿','czechia':'🇨🇿','cz':'🇨🇿',
+    'belgien':'🇧🇪','belgium':'🇧🇪','be':'🇧🇪',
+    'niederlande':'🇳🇱','netherlands':'🇳🇱','nl':'🇳🇱','holland':'🇳🇱',
+    'usa':'🇺🇸','united states':'🇺🇸','us':'🇺🇸',
+    'großbritannien':'🇬🇧','uk':'🇬🇧','england':'🇬🇧',
+    'irland':'🇮🇪','ireland':'🇮🇪','ie':'🇮🇪',
+    'dänemark':'🇩🇰','denmark':'🇩🇰','dk':'🇩🇰',
+    'schweden':'🇸🇪','sweden':'🇸🇪','se':'🇸🇪',
+    'norwegen':'🇳🇴','norway':'🇳🇴','no':'🇳🇴',
+    'finnland':'🇫🇮','finland':'🇫🇮','fi':'🇫🇮',
+    'schweiz':'🇨🇭','switzerland':'🇨🇭','ch':'🇨🇭',
+    'frankreich':'🇫🇷','france':'🇫🇷','fr':'🇫🇷',
+    'italien':'🇮🇹','italy':'🇮🇹','it':'🇮🇹',
+    'spanien':'🇪🇸','spain':'🇪🇸','es':'🇪🇸',
+    'polen':'🇵🇱','poland':'🇵🇱','pl':'🇵🇱',
+    'japan':'🇯🇵','jp':'🇯🇵',
+    'mexiko':'🇲🇽','mexico':'🇲🇽','mx':'🇲🇽',
+    'kanada':'🇨🇦','canada':'🇨🇦','ca':'🇨🇦',
+    'australien':'🇦🇺','australia':'🇦🇺','au':'🇦🇺',
+  };
+  return m[c.toLowerCase()] || '🌍';
+}
+
+function thumb(f) { return f ? `/uploads/thumbs/${f}` : null; }
+function orig(f)  { return f ? `/uploads/originals/${f}` : null; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function makeAutocomplete(input, fetchFn, onSelect) {
+  let drop = null, focIdx = -1;
+
+  function close() { drop?.remove(); drop = null; focIdx = -1; }
+
+  function open(items) {
+    close();
+    if (!items.length) return;
+    drop = document.createElement('div');
+    drop.className = 'ac-drop';
+    items.forEach(item => {
+      const d = document.createElement('div');
+      d.className = 'ac-item';
+      d.innerHTML = item.html;
+      d.addEventListener('mousedown', e => { e.preventDefault(); onSelect(item); close(); });
+      drop.appendChild(d);
+    });
+    input.parentNode.appendChild(drop);
+  }
+
+  input.addEventListener('input', async () => {
+    const q = input.value.trim();
+    if (!q) { close(); return; }
+    try { open(await fetchFn(q)); } catch(_) {}
+  });
+
+  input.addEventListener('keydown', e => {
+    if (!drop) return;
+    const rows = drop.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') { focIdx = Math.min(focIdx+1, rows.length-1); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { focIdx = Math.max(focIdx-1, -1); e.preventDefault(); }
+    else if (e.key === 'Enter' && focIdx >= 0) { e.preventDefault(); rows[focIdx].dispatchEvent(new Event('mousedown')); }
+    else if (e.key === 'Escape') { close(); }
+    rows.forEach((r,i) => r.classList.toggle('focused', i === focIdx));
+  });
+
+  input.addEventListener('blur', () => setTimeout(close, 150));
+}
+
+const App = {
+  history: [],
+  view: null,
+  searchOpen: false,
+  filters: { search: '', country: '' },
+  _searchTimer: null,
+  _pending: [],
+
+  init() {
+    window.addEventListener('hashchange', () => this._route());
+    this._route();
+  },
+
+  _route() {
+    const h = location.hash.slice(1) || 'grid';
+    const [v, id] = h.split('/');
+    this.view = v;
+    this._render(v, id);
+  },
+
+  go(view, id) {
+    this.history.push(location.hash);
+    location.hash = id ? `${view}/${id}` : view;
+  },
+
+  goBack() {
+    if (this.history.length) location.hash = this.history.pop();
+    else location.hash = 'grid';
+  },
+
+  toggleSearch() {
+    this.searchOpen = !this.searchOpen;
+    document.getElementById('searchWrap').classList.toggle('open', this.searchOpen);
+    if (this.searchOpen) document.getElementById('searchInput').focus();
+  },
+
+  onSearch() {
+    clearTimeout(this._searchTimer);
+    this._searchTimer = setTimeout(() => {
+      this.filters.search = document.getElementById('searchInput').value.trim();
+      if (this.view === 'grid') this._renderGrid();
+    }, 280);
+  },
+
+  _setNav(view) {
+    document.getElementById('navGrid').classList.toggle('active', view === 'grid');
+    document.getElementById('navBrands').classList.toggle('active', view === 'brands');
+  },
+
+  _setTop(back, title, showSearch) {
+    document.getElementById('backBtn').classList.toggle('hidden', !back);
+    document.getElementById('topbarLogo').style.display = back ? 'none' : '';
+    const t = document.getElementById('topbarTitle');
+    t.style.display = back ? '' : 'none';
+    t.textContent = title || '';
+    document.getElementById('searchBtn').style.visibility = showSearch ? '' : 'hidden';
+  },
+
+  _render(view, id) {
+    this._setNav(view);
+    const main = document.getElementById('main');
+    main.innerHTML = '<div class="loading">Lade …</div>';
+
+    if (view === 'grid') {
+      this._setTop(false, '', true);
+      this._renderGrid();
+    } else if (view === 'brands') {
+      this._setTop(false, '', false);
+      this._renderBrands();
+    } else if (view === 'bottle') {
+      this._setTop(true, '', false);
+      this._renderBottle(id);
+    } else if (view === 'brand') {
+      this._setTop(true, '', false);
+      this._renderBrand(id);
+    } else if (view === 'add') {
+      this._setTop(true, 'Neue Flasche', false);
+      this._renderForm(null);
+    } else if (view === 'edit') {
+      this._setTop(true, 'Bearbeiten', false);
+      this._renderForm(id);
+    }
+  },
+
+  async _renderGrid() {
+    const main = document.getElementById('main');
+    try {
+      const p = new URLSearchParams();
+      if (this.filters.search) p.set('search', this.filters.search);
+      if (this.filters.country) p.set('country', this.filters.country);
+      const bottles = await apiFetch('/bottles?' + p);
+
+      this._renderFilterChips(bottles);
+
+      if (!bottles.length) {
+        main.innerHTML = `<div class="empty">
+          <div class="empty-icon">🍺</div>
+          <div class="empty-title">${this.filters.search || this.filters.country ? 'Keine Treffer' : 'Noch keine Flaschen'}</div>
+          <div class="empty-text">${this.filters.search || this.filters.country ? 'Andere Suchbegriffe probieren.' : 'Tippe auf ＋ um die erste Flasche hinzuzufügen.'}</div>
+        </div>`;
+        return;
+      }
+
+      main.innerHTML = `<div class="grid">${bottles.map(b => {
+        const t = thumb(b.thumb);
+        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
+        const f = b.country ? flag(b.country) + ' ' : '';
+        const meta = b.style ? `${styleIcon(b.style)} ${esc(b.style)}` : `${f}${esc(b.country||'')}`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.brand_name)}</div><div class="card-meta">${meta}</div></div></div>`;
+      }).join('')}</div>`;
+    } catch(e) {
+      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  },
+
+  _renderFilterChips(bottles) {
+    const countries = [...new Set(bottles.map(b=>b.country).filter(Boolean))].sort();
+    const row = document.getElementById('filterRow');
+    if (!countries.length) { row.innerHTML=''; return; }
+    row.innerHTML = countries.map(c =>
+      `<div class="filter-chip${this.filters.country===c?' active':''}" onclick="App._filterCountry('${esc(c)}')">${flag(c)} ${esc(c)}</div>`
+    ).join('');
+  },
+
+  _filterCountry(c) {
+    this.filters.country = this.filters.country === c ? '' : c;
+    this._renderGrid();
+  },
+
+  async _renderBrands() {
+    const main = document.getElementById('main');
+    try {
+      const brands = await apiFetch('/brands');
+      if (!brands.length) {
+        main.innerHTML = `<div class="empty"><div class="empty-icon">🏷️</div><div class="empty-title">Keine Marken</div><div class="empty-text">Füge die erste Flasche hinzu.</div></div>`;
+        return;
+      }
+      main.innerHTML = `<div class="brand-list">${brands.map(br => {
+        const t = thumb(br.thumb);
+        const th = t ? `<img class="b-thumb" src="${esc(t)}" loading="lazy" alt="">` : `<div class="b-thumb-ph">🍺</div>`;
+        const sub = br.country ? `${flag(br.country)} ${esc(br.country)}` : '';
+        return `<div class="brand-item" onclick="App.go('brand',${br.id})">${th}<div class="b-info"><div class="b-name">${esc(br.name)}</div>${sub?`<div class="b-sub">${sub}</div>`:''}</div><div class="b-count">${br.bottle_count}</div></div>`;
+      }).join('')}</div>`;
+    } catch(e) {
+      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  },
+
+  async _renderBottle(id) {
+    const main = document.getElementById('main');
+    try {
+      const b = await apiFetch(`/bottles/${id}`);
+      document.getElementById('topbarTitle').textContent = b.brand_name;
+
+      const gallery = b.photos.length
+        ? b.photos.map(p=>`<img class="g-img" src="${esc(orig(p.filename))}" loading="lazy" alt="">`).join('')
+        : `<div class="g-ph">${styleIcon(b.style)}</div>`;
+
+      const rows = [
+        b.style ? `<div class="d-label">Stil</div><div class="d-value">${styleIcon(b.style)} ${esc(b.style)}</div>` : '',
+        b.country ? `<div class="d-label">Land</div><div class="d-value">${flag(b.country)} ${esc(b.country)}</div>` : '',
+      ].filter(Boolean).join('');
+
+      const notes = b.notes ? `<div class="info-card"><div class="d-label">Notizen &amp; Bewertung</div><div class="notes-box">${esc(b.notes)}</div></div>` : '';
+
+      main.innerHTML = `<div class="detail">
+        <div class="gallery">${gallery}</div>
+        <div class="info-card">
+          <div class="d-brand">${esc(b.brand_name)}</div>
+          ${rows}
+        </div>
+        ${notes}
+        <div class="action-row">
+          <button class="btn btn-outline" onclick="App.go('edit',${b.id})">✏️ Bearbeiten</button>
+          <button class="btn btn-danger" onclick="App._deleteBottle(${b.id})">🗑️ Löschen</button>
+        </div>
+      </div>`;
+    } catch(e) {
+      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  },
+
+  async _deleteBottle(id) {
+    if (!confirm('Flasche wirklich löschen?')) return;
+    await apiFetch(`/bottles/${id}`, { method: 'DELETE' });
+    showToast('Flasche gelöscht');
+    this.history = [];
+    location.hash = 'grid';
+  },
+
+  async _renderBrand(id) {
+    const main = document.getElementById('main');
+    try {
+      const { brand, bottles } = await apiFetch(`/brands/${id}/bottles`);
+      document.getElementById('topbarTitle').textContent = brand.name;
+
+      const cards = bottles.length ? bottles.map(b => {
+        const t = thumb(b.thumb);
+        const img = t ? `<img class="card-img" src="${esc(t)}" loading="lazy" alt="">` : `<div class="card-placeholder">${styleIcon(b.style)}</div>`;
+        return `<div class="card" onclick="App.go('bottle',${b.id})">${img}<div class="card-body"><div class="card-brand">${esc(b.style||'–')}</div><div class="card-meta">${b.style?styleIcon(b.style)+' '+esc(b.style):''}</div></div></div>`;
+      }).join('') : '<div class="empty"><div class="empty-icon">📦</div><div class="empty-title">Keine Flaschen</div></div>';
+
+      const sub = brand.country ? `${flag(brand.country)} ${brand.country}` : '';
+      main.innerHTML = `
+        <div class="brand-hero"><h2>${esc(brand.name)}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>
+        <div class="section-label">${bottles.length} Flasche${bottles.length!==1?'n':''}</div>
+        <div class="grid">${cards}</div>`;
+    } catch(e) {
+      main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div><div class="empty-text">${esc(e.message)}</div></div>`;
+    }
+  },
+
+  async _renderForm(id) {
+    const main = document.getElementById('main');
+    this._pending = [];
+    let bottle = null;
+    if (id) {
+      try { bottle = await apiFetch(`/bottles/${id}`); }
+      catch(e) { main.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Fehler</div></div>`; return; }
+    }
+
+    const existingPhotos = (bottle?.photos||[]).map(p => `
+      <div class="preview-item" id="ep${p.id}">
+        <img src="${esc(thumb(p.filename))}" alt="">
+        <button class="remove-btn" type="button" onclick="App._delExistingPhoto(${p.id})">✕</button>
+      </div>`).join('');
+
+    main.innerHTML = `<form class="form" id="form" onsubmit="App._submit(event,${id||'null'})">
+      <div class="field">
+        <label>Marke *</label>
+        <div class="ac-wrap">
+          <input id="fBrand" type="text" value="${esc(bottle?.brand_name||'')}" placeholder="z.B. Trumer Privatbrauerei" required autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label>Land (optional)</label>
+        <input id="fCountry" type="text" value="${esc(bottle?.country||'')}" placeholder="z.B. Österreich">
+      </div>
+      <div class="field">
+        <label>Bierstil (optional)</label>
+        <div class="ac-wrap">
+          <input id="fStyle" type="text" value="${esc(bottle?.style||'')}" placeholder="z.B. Pils, IPA, Weizen …" autocomplete="off">
+        </div>
+      </div>
+      <div class="field">
+        <label>Notizen / Bewertung (optional)</label>
+        <textarea id="fNotes" placeholder="Geschmack, Bewertung, besondere Merkmale …">${esc(bottle?.notes||'')}</textarea>
+      </div>
+      ${bottle?.photos?.length ? `<div class="field"><label>Vorhandene Fotos</label><div class="preview-grid" id="existGrid">${existingPhotos}</div></div>` : ''}
+      <div class="field">
+        <label>${id?'Fotos hinzufügen':'Fotos (optional)'}</label>
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fPhotos').click()">
+          <input type="file" id="fPhotos" accept="image/*" multiple onchange="App._addFiles(event)">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Tippe zum Auswählen<br><small>Mehrere Fotos möglich</small></div>
+        </div>
+        <div class="preview-grid" id="previewGrid"></div>
+      </div>
+      <button type="submit" class="submit-btn" id="submitBtn">${id?'Änderungen speichern':'Flasche hinzufügen'}</button>
+    </form>`;
+
+    // Brand autocomplete
+    makeAutocomplete(
+      document.getElementById('fBrand'),
+      async q => {
+        const r = await apiFetch('/brands/autocomplete?q=' + encodeURIComponent(q));
+        return r.map(b => ({
+          html: `<div>${esc(b.name)}</div>${b.country?`<div class="ac-sub">${flag(b.country)} ${esc(b.country)}</div>`:''}`,
+          name: b.name, country: b.country
+        }));
+      },
+      item => {
+        document.getElementById('fBrand').value = item.name;
+        if (item.country) document.getElementById('fCountry').value = item.country;
+      }
+    );
+
+    // Style autocomplete
+    makeAutocomplete(
+      document.getElementById('fStyle'),
+      async q => {
+        const r = await apiFetch('/styles/autocomplete?q=' + encodeURIComponent(q));
+        return r.map(s => ({ html: `<div>${styleIcon(s)} ${esc(s)}</div>`, name: s }));
+      },
+      item => { document.getElementById('fStyle').value = item.name; }
+    );
+
+    // Drag-and-drop
+    const area = document.getElementById('uploadArea');
+    area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag'); });
+    area.addEventListener('dragleave', () => area.classList.remove('drag'));
+    area.addEventListener('drop', e => { e.preventDefault(); area.classList.remove('drag'); this._addFileList(e.dataTransfer.files); });
+  },
+
+  _addFiles(e) { this._addFileList(e.target.files); e.target.value = ''; },
+
+  _addFileList(files) {
+    const grid = document.getElementById('previewGrid');
+    Array.from(files).filter(f => f.type.startsWith('image/')).forEach(file => {
+      const idx = this._pending.length;
+      this._pending.push(file);
+      const url = URL.createObjectURL(file);
+      const div = document.createElement('div');
+      div.className = 'preview-item'; div.id = `pp${idx}`;
+      div.innerHTML = `<img src="${url}" alt=""><button class="remove-btn" type="button" onclick="App._removePending(${idx})">✕</button>`;
+      grid.appendChild(div);
+    });
+  },
+
+  _removePending(idx) { this._pending[idx] = null; document.getElementById(`pp${idx}`)?.remove(); },
+
+  async _delExistingPhoto(photoId) {
+    if (!confirm('Foto löschen?')) return;
+    await apiFetch(`/photos/${photoId}`, { method: 'DELETE' });
+    document.getElementById(`ep${photoId}`)?.remove();
+    showToast('Foto gelöscht');
+  },
+
+  async _submit(e, id) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Speichern …';
+    try {
+      const fd = new FormData();
+      fd.append('brand_name', document.getElementById('fBrand').value.trim());
+      fd.append('brand_country', document.getElementById('fCountry').value.trim());
+      fd.append('style', document.getElementById('fStyle').value.trim());
+      fd.append('notes', document.getElementById('fNotes').value.trim());
+      this._pending.filter(Boolean).forEach(f => fd.append('photos', f));
+      const r = await apiFetch(id ? `/bottles/${id}` : '/bottles', { method: id ? 'PUT' : 'POST', body: fd });
+      showToast(id ? 'Gespeichert!' : 'Flasche hinzugefügt!');
+      this.history = [];
+      location.hash = `bottle/${r.id}`;
+    } catch(err) {
+      showToast('Fehler: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = id ? 'Änderungen speichern' : 'Flasche hinzufügen';
+    }
+  },
+};
+
+App.init();
+</script>
+</body>
+</html>
